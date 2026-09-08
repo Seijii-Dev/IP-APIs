@@ -28,7 +28,7 @@ const limiter = rateLimit({
 
 app.use('/api', limiter)
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   const cache = getCacheStats()
   res.json({
     status: 'operational',
@@ -42,7 +42,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/ip', ipRouter)
 app.use('/api/batch', batchRouter)
 
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({
     success: false,
     error: 'Endpoint not found',

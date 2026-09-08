@@ -2,6 +2,44 @@ import { isValidIP, normalizeIP, isPrivateIP } from './validators.js'
 import { getCached, setCache } from './cache.js'
 import type { GeoLocation } from '../types/index.js'
 
+interface IPApiResponse {
+  status: string
+  message?: string
+  continent?: string
+  country?: string
+  countryCode?: string
+  regionName?: string
+  city?: string
+  zip?: string
+  lat?: number
+  lon?: number
+  timezone?: string
+  isp?: string
+  org?: string
+  as?: string
+  query?: string
+}
+
+interface IPWhoIsResponse {
+  success: boolean
+  ip?: string
+  type?: 'IPv4' | 'IPv6'
+  continent?: string
+  country?: string
+  country_code?: string
+  region?: string
+  city?: string
+  latitude?: number
+  longitude?: number
+  postal?: string
+  timezone?: { id?: string }
+  connection?: {
+    asn?: string
+    isp?: string
+    org?: string
+  }
+}
+
 export async function getGeolocation(ip: string): Promise<GeoLocation> {
   const normalized = normalizeIP(ip)
   
@@ -31,7 +69,7 @@ export async function getGeolocation(ip: string): Promise<GeoLocation> {
   if (!result || !result.country) {
     const fallback = await fetchIPWhoIs(normalized)
     if (fallback) {
-      const merged = { ...fallback, ...result }
+      const merged = result ? { ...fallback, ...result } : fallback
       setCache(normalized, merged)
       return merged
     }
@@ -57,11 +95,11 @@ async function fetchIPAPI(ip: string): Promise<GeoLocation | null> {
     
     if (!res.ok) return null
     
-    const data = await res.json()
+    const data = await res.json() as IPApiResponse
     if (data.status !== 'success') return null
 
     return {
-      ip: data.query,
+      ip: data.query || ip,
       type: ip.includes(':') ? 'IPv6' : 'IPv4',
       continent: data.continent || undefined,
       country: data.country || 'Unknown',
@@ -97,7 +135,7 @@ async function fetchIPWhoIs(ip: string): Promise<GeoLocation | null> {
     clearTimeout(timeout)
     
     if (!res.ok) return null
-    const data = await res.json()
+    const data = await res.json() as IPWhoIsResponse
     if (!data.success) return null
 
     return {

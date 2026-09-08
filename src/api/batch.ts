@@ -52,8 +52,8 @@ router.post('/', async (req: Request, res: Response) => {
     }
     
     res.json({
-      success: true,
-      ...response
+      ...response,
+      success: true
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
